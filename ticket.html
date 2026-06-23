@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entrada Observatori Espacial — Per la Jana</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;1,300&display=swap');
+
+    :root {
+      --gold: #f5c842;
+      --gold-light: #ffe680;
+      --space-dark: #05060f;
+      --space-blue: #0a0e2a;
+      --nebula-purple: #2d1b69;
+      --star-white: #e8eaf6;
+      --accent-cyan: #00e5ff;
+      --accent-pink: #ff4081;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--space-dark);
+      font-family: 'Exo 2', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ── Starfield ── */
+    #stars-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── Nebula blobs ── */
+    .nebula {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.18;
+      z-index: 0;
+      pointer-events: none;
+      animation: nebula-drift 20s ease-in-out infinite alternate;
+    }
+    .nebula-1 { width: 500px; height: 500px; background: var(--nebula-purple); top: -100px; left: -150px; }
+    .nebula-2 { width: 400px; height: 400px; background: #0d47a1; bottom: -100px; right: -100px; animation-delay: -10s; }
+    .nebula-3 { width: 300px; height: 300px; background: #880e4f; top: 40%; left: 60%; animation-delay: -5s; }
+    @keyframes nebula-drift { from { transform: translate(0,0) scale(1); } to { transform: translate(30px,20px) scale(1.1); } }
+
+    /* ── Page wrapper ── */
+    .page {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 680px;
+      padding: 24px 16px 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+    }
+
+    /* ── Header greeting ── */
+    .greeting {
+      text-align: center;
+    }
+    .greeting .from-label {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 4px;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      opacity: 0.8;
+      margin-bottom: 10px;
+    }
+    .greeting h1 {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.6rem, 5vw, 2.6rem);
+      font-weight: 900;
+      color: var(--gold);
+      text-shadow: 0 0 30px rgba(245,200,66,0.6), 0 0 60px rgba(245,200,66,0.3);
+      line-height: 1.2;
+    }
+    .greeting .subtitle {
+      margin-top: 10px;
+      font-size: 1rem;
+      color: var(--star-white);
+      opacity: 0.75;
+      font-style: italic;
+      font-weight: 300;
+    }
+
+    /* ── Ticket card ── */
+    .ticket {
+      width: 100%;
+      background: linear-gradient(145deg, #0d1033 0%, #0a0e2a 60%, #14093d 100%);
+      border: 1px solid rgba(245,200,66,0.35);
+      border-radius: 20px;
+      box-shadow:
+        0 0 0 1px rgba(0,229,255,0.08),
+        0 8px 40px rgba(0,0,0,0.7),
+        0 0 60px rgba(245,200,66,0.08);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* golden top stripe */
+    .ticket::before {
+      content: '';
+      display: block;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--gold), var(--accent-pink), var(--gold), var(--accent-cyan));
+      background-size: 300% 100%;
+      animation: stripe-slide 4s linear infinite;
+    }
+    @keyframes stripe-slide { 0% { background-position: 0% 0%; } 100% { background-position: 300% 0%; } }
+
+    .ticket-body {
+      padding: 32px 36px 28px;
+      display: grid;
+      gap: 24px;
+    }
+
+    /* ── Observatory logo / icon ── */
+    .obs-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+    .dome-svg {
+      width: 80px;
+      height: 80px;
+      filter: drop-shadow(0 0 16px rgba(245,200,66,0.6));
+      animation: float 5s ease-in-out infinite;
+    }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+    .obs-title-block { flex: 1; }
+    .obs-name {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .obs-subtitle {
+      font-size: 0.78rem;
+      color: var(--accent-cyan);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: rgba(245,200,66,0.3);
+      font-size: 0.65rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(245,200,66,0.3));
+    }
+    .divider::after { background: linear-gradient(90deg, rgba(245,200,66,0.3), transparent); }
+
+    /* ── Info grid ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px 24px;
+    }
+    .info-field label {
+      display: block;
+      font-size: 0.65rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent-cyan);
+      opacity: 0.7;
+      margin-bottom: 4px;
+    }
+    .info-field .value {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.95rem;
+      color: var(--star-white);
+      font-weight: 400;
+    }
+    .info-field .value.highlight {
+      color: var(--gold);
+      font-size: 1.1rem;
+      text-shadow: 0 0 12px rgba(245,200,66,0.5);
+    }
+    .info-field.full { grid-column: 1 / -1; }
+
+    /* ── Perforated separator ── */
+    .perforation {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin: 0 -36px;
+      position: relative;
+    }
+    .perf-circle {
+      width: 22px;
+      height: 22px;
+      background: var(--space-dark);
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: inset 0 0 0 1px rgba(245,200,66,0.2);
+    }
+    .perf-line {
+      flex: 1;
+      border-top: 2px dashed rgba(245,200,66,0.25);
+    }
+
+    /* ── QR / barcode section ── */
+    .ticket-stub {
+      padding: 20px 36px 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      background: rgba(0,0,0,0.25);
+    }
+
+    .qr-box {
+      flex-shrink: 0;
+      width: 90px;
+      height: 90px;
+      background: white;
+      border-radius: 8px;
+      padding: 6px;
+      box-shadow: 0 0 20px rgba(0,229,255,0.3);
+    }
+    .qr-box svg { width: 100%; height: 100%; }
+
+    .stub-info { flex: 1; }
+    .stub-name {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-shadow: 0 0 20px rgba(245,200,66,0.5);
+    }
+    .stub-event {
+      font-size: 0.8rem;
+      color: var(--star-white);
+      opacity: 0.65;
+      margin-top: 4px;
+      font-style: italic;
+    }
+    .stub-code {
+      margin-top: 10px;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 4px;
+      color: var(--accent-cyan);
+      opacity: 0.6;
+    }
+
+    /* ── Shooting star button ── */
+    .btn-wrap {
+      text-align: center;
+    }
+    .btn-download {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 36px;
+      background: linear-gradient(135deg, var(--gold) 0%, #e6a800 100%);
+      color: #1a0a00;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(245,200,66,0.45);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-download:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 8px 32px rgba(245,200,66,0.65);
+    }
+    .btn-download::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -60%;
+      width: 40%; height: 200%;
+      background: rgba(255,255,255,0.25);
+      transform: skewX(-20deg);
+      animation: sheen 3s ease-in-out infinite;
+    }
+    @keyframes sheen { 0%,80%,100% { left: -60%; } 40% { left: 120%; } }
+
+    /* ── Message card ── */
+    .message-card {
+      width: 100%;
+      background: rgba(13,16,51,0.7);
+      border: 1px solid rgba(0,229,255,0.15);
+      border-radius: 16px;
+      padding: 28px 32px;
+      text-align: center;
+      backdrop-filter: blur(8px);
+    }
+    .message-card .heart {
+      font-size: 1.8rem;
+      margin-bottom: 12px;
+      animation: pulse-heart 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse-heart { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+    .message-card p {
+      font-size: 1rem;
+      color: var(--star-white);
+      line-height: 1.8;
+      font-weight: 300;
+    }
+    .message-card p strong {
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    /* ── Confetti ── */
+    .confetti-piece {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 999;
+      animation: confetti-fall linear forwards;
+    }
+    @keyframes confetti-fall {
+      0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      .ticket-body { padding: 24px 20px 20px; }
+      .ticket-stub { padding: 16px 20px; }
+      .perforation { margin: 0 -20px; }
+      .info-grid { grid-template-columns: 1fr; }
+      .info-field.full { grid-column: 1; }
+      .obs-icon { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="stars-canvas"></canvas>
+<div class="nebula nebula-1"></div>
+<div class="nebula nebula-2"></div>
+<div class="nebula nebula-3"></div>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="greeting">
+    <div class="from-label">Un regal especial per a tu</div>
+    <h1>Feliç Sant, Jana! ✨</h1>
+    <p class="subtitle">Una nit entre les estrelles t'espera</p>
+  </div>
+
+  <!-- Ticket -->
+  <div class="ticket" id="ticket">
+    <div class="ticket-body">
+
+      <!-- Observatory header -->
+      <div class="obs-icon">
+        <svg class="dome-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- base -->
+          <rect x="10" y="72" width="80" height="8" rx="3" fill="#f5c842" opacity="0.9"/>
+          <!-- dome body -->
+          <path d="M18 72 Q18 30 50 30 Q82 30 82 72Z" fill="#1a1a4e" stroke="#f5c842" stroke-width="2"/>
+          <!-- dome sheen -->
+          <path d="M25 65 Q28 42 50 36" stroke="rgba(255,255,255,0.15)" stroke-width="3" stroke-linecap="round"/>
+          <!-- slit -->
+          <path d="M50 30 L50 72" stroke="#f5c842" stroke-width="2.5" opacity="0.7"/>
+          <path d="M42 48 L58 48" stroke="#f5c842" stroke-width="1.5" opacity="0.5"/>
+          <!-- telescope -->
+          <line x1="50" y1="58" x2="62" y2="44" stroke="#00e5ff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="64" cy="42" r="4" fill="#00e5ff" opacity="0.8"/>
+          <!-- stars around -->
+          <circle cx="20" cy="18" r="1.5" fill="#f5c842" opacity="0.8"/>
+          <circle cx="80" cy="12" r="2" fill="white" opacity="0.7"/>
+          <circle cx="88" cy="30" r="1" fill="#00e5ff" opacity="0.9"/>
+          <circle cx="12" cy="45" r="1.2" fill="white" opacity="0.6"/>
+          <circle cx="72" cy="22" r="1" fill="#f5c842" opacity="0.6"/>
+        </svg>
+        <div class="obs-title-block">
+          <div class="obs-name">Observatori Espacial</div>
+          <div class="obs-name" style="font-size:0.85rem; color:#e8eaf6; opacity:0.8;">de Catalunya</div>
+          <div class="obs-subtitle">Nit d'Observació Guiada</div>
+        </div>
+      </div>
+
+      <div class="divider">Entrada Oficial</div>
+
+      <!-- Info fields -->
+      <div class="info-grid">
+        <div class="info-field">
+          <label>Titular</label>
+          <div class="value highlight">Jana</div>
+        </div>
+        <div class="info-field">
+          <label>Tipus d'entrada</label>
+          <div class="value">VIP · Observació</div>
+        </div>
+        <div class="info-field">
+          <label>Data</label>
+          <div class="value">A triar per tu</div>
+        </div>
+        <div class="info-field">
+          <label>Hora d'inici</label>
+          <div class="value">Quan caigui la nit</div>
+        </div>
+        <div class="info-field full">
+          <label>Experiència inclosa</label>
+          <div class="value" style="font-size:0.85rem; opacity:0.85; font-family:'Exo 2',sans-serif;">
+            Telescopi professional · Mapa estel·lar personalitzat · Xerrada astronòmica · Cel nocturn màgic
+          </div>
+        </div>
+        <div class="info-field">
+          <label>Número d'entrada</label>
+          <div class="value" style="font-size:0.8rem; opacity:0.7;">#JANA-2026-001</div>
+        </div>
+        <div class="info-field">
+          <label>Motiu</label>
+          <div class="value" style="font-size:0.85rem; color:var(--accent-pink);">Sant de la Jana 💫</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Perforated edge -->
+    <div class="perforation">
+      <div class="perf-circle"></div>
+      <div class="perf-line"></div>
+      <div class="perf-circle"></div>
+    </div>
+
+    <!-- Stub -->
+    <div class="ticket-stub">
+      <div class="qr-box">
+        <!-- Minimal QR-like SVG pattern -->
+        <svg viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+          <rect width="21" height="21" fill="white"/>
+          <!-- top-left finder -->
+          <rect x="1" y="1" width="7" height="7" fill="#111" rx="1"/>
+          <rect x="2" y="2" width="5" height="5" fill="white"/>
+          <rect x="3" y="3" width="3" height="3" fill="#111"/>
+          <!-- top-right finder -->
+          <rect x="13" y="1" width="7" height="7" fill="#111" rx="1"/>
+          <rect x="14" y="2" width="5" height="5" fill="white"/>
+          <rect x="15" y="3" width="3" height="3" fill="#111"/>
+          <!-- bottom-left finder -->
+          <rect x="1" y="13" width="7" height="7" fill="#111" rx="1"/>
+          <rect x="2" y="14" width="5" height="5" fill="white"/>
+          <rect x="3" y="15" width="3" height="3" fill="#111"/>
+          <!-- data dots -->
+          <rect x="9" y="1" width="1" height="1" fill="#111"/>
+          <rect x="11" y="1" width="1" height="1" fill="#111"/>
+          <rect x="9" y="3" width="2" height="1" fill="#111"/>
+          <rect x="9" y="5" width="1" height="1" fill="#111"/>
+          <rect x="11" y="5" width="1" height="1" fill="#111"/>
+          <rect x="9" y="7" width="2" height="1" fill="#111"/>
+          <rect x="1" y="9" width="2" height="1" fill="#111"/>
+          <rect x="4" y="9" width="1" height="1" fill="#111"/>
+          <rect x="6" y="9" width="2" height="1" fill="#111"/>
+          <rect x="9" y="9" width="1" height="1" fill="#111"/>
+          <rect x="11" y="9" width="2" height="1" fill="#111"/>
+          <rect x="14" y="9" width="1" height="1" fill="#111"/>
+          <rect x="16" y="9" width="2" height="1" fill="#111"/>
+          <rect x="19" y="9" width="1" height="1" fill="#111"/>
+          <rect x="1" y="11" width="1" height="1" fill="#111"/>
+          <rect x="3" y="11" width="2" height="1" fill="#111"/>
+          <rect x="7" y="11" width="1" height="1" fill="#111"/>
+          <rect x="9" y="11" width="3" height="1" fill="#111"/>
+          <rect x="13" y="11" width="2" height="1" fill="#111"/>
+          <rect x="17" y="11" width="1" height="1" fill="#111"/>
+          <rect x="19" y="11" width="1" height="1" fill="#111"/>
+          <rect x="9" y="13" width="1" height="1" fill="#111"/>
+          <rect x="11" y="13" width="1" height="1" fill="#111"/>
+          <rect x="13" y="13" width="1" height="1" fill="#111"/>
+          <rect x="15" y="13" width="2" height="1" fill="#111"/>
+          <rect x="19" y="13" width="1" height="1" fill="#111"/>
+          <rect x="9" y="15" width="2" height="1" fill="#111"/>
+          <rect x="13" y="15" width="1" height="1" fill="#111"/>
+          <rect x="16" y="15" width="1" height="1" fill="#111"/>
+          <rect x="18" y="15" width="2" height="1" fill="#111"/>
+          <rect x="9" y="17" width="1" height="1" fill="#111"/>
+          <rect x="11" y="17" width="2" height="1" fill="#111"/>
+          <rect x="15" y="17" width="1" height="1" fill="#111"/>
+          <rect x="17" y="17" width="1" height="1" fill="#111"/>
+          <rect x="9" y="19" width="3" height="1" fill="#111"/>
+          <rect x="13" y="19" width="2" height="1" fill="#111"/>
+          <rect x="17" y="19" width="1" height="1" fill="#111"/>
+          <rect x="19" y="19" width="1" height="1" fill="#111"/>
+        </svg>
+      </div>
+      <div class="stub-info">
+        <div class="stub-name">JANA</div>
+        <div class="stub-event">Nit d'Observació Espacial · 2026</div>
+        <div class="stub-code">JANA · 2026 · OBS · 001 · VIP</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Download button -->
+  <div class="btn-wrap">
+    <button class="btn-download" onclick="printTicket()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+      </svg>
+      Desa l'entrada
+    </button>
+  </div>
+
+  <!-- Personal message -->
+  <div class="message-card">
+    <div class="heart">🌟</div>
+    <p>
+      Estimada <strong>Jana</strong>,<br>
+      perquè el teu sant sigui tan <strong>brillant com les estrelles</strong>,
+      t'entrego aquesta nit especial per contemplar l'univers junts.<br><br>
+      El cosmos t'espera. <strong>Feliç Sant!</strong>
+    </p>
+  </div>
+
+</div>
+
+<script>
+  /* ── Starfield canvas ── */
+  const canvas = document.getElementById('stars-canvas');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+  let shootingStars = [];
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    initStars();
+  }
+
+  function initStars() {
+    stars = [];
+    const n = Math.floor((canvas.width * canvas.height) / 3500);
+    for (let i = 0; i < n; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.5 + 0.2,
+        alpha: Math.random() * 0.8 + 0.2,
+        speed: Math.random() * 0.004 + 0.001,
+        phase: Math.random() * Math.PI * 2,
+        color: Math.random() > 0.8 ? '#a8d0ff' : Math.random() > 0.5 ? '#fff8e1' : '#ffffff'
+      });
+    }
+  }
+
+  function spawnShootingStar() {
+    shootingStars.push({
+      x: Math.random() * canvas.width * 0.7,
+      y: Math.random() * canvas.height * 0.4,
+      len: Math.random() * 120 + 60,
+      speed: Math.random() * 8 + 6,
+      alpha: 1,
+      angle: Math.PI / 5
+    });
+  }
+
+  function drawFrame(ts) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // static stars
+    stars.forEach(s => {
+      const a = s.alpha * (0.6 + 0.4 * Math.sin(ts * s.speed + s.phase));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = s.color;
+      ctx.globalAlpha = a;
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    // shooting stars
+    shootingStars = shootingStars.filter(ss => ss.alpha > 0);
+    shootingStars.forEach(ss => {
+      const ex = ss.x + Math.cos(ss.angle) * ss.len;
+      const ey = ss.y + Math.sin(ss.angle) * ss.len;
+      const grad = ctx.createLinearGradient(ss.x, ss.y, ex, ey);
+      grad.addColorStop(0, `rgba(255,255,255,0)`);
+      grad.addColorStop(0.6, `rgba(245,200,66,${ss.alpha * 0.8})`);
+      grad.addColorStop(1, `rgba(255,255,255,${ss.alpha})`);
+      ctx.beginPath();
+      ctx.moveTo(ss.x, ss.y);
+      ctx.lineTo(ex, ey);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ss.x += Math.cos(ss.angle) * ss.speed;
+      ss.y += Math.sin(ss.angle) * ss.speed;
+      ss.alpha -= 0.018;
+    });
+
+    requestAnimationFrame(drawFrame);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(drawFrame);
+  setInterval(spawnShootingStar, 3500);
+  setTimeout(spawnShootingStar, 800);
+
+  /* ── Confetti burst on load ── */
+  const confettiColors = ['#f5c842','#00e5ff','#ff4081','#ffffff','#a8d0ff','#69f0ae'];
+  function burst() {
+    for (let i = 0; i < 60; i++) {
+      setTimeout(() => {
+        const el = document.createElement('div');
+        el.className = 'confetti-piece';
+        el.style.left = Math.random() * 100 + 'vw';
+        el.style.top = '-10px';
+        el.style.background = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+        el.style.width = (Math.random() * 8 + 4) + 'px';
+        el.style.height = el.style.width;
+        el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        el.style.animationDuration = (Math.random() * 3 + 2.5) + 's';
+        el.style.animationDelay = (Math.random() * 0.5) + 's';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 6000);
+      }, i * 40);
+    }
+  }
+  burst();
+
+  /* ── Print / Save ── */
+  function printTicket() {
+    window.print();
+  }
+</script>
+
+<style media="print">
+  body { background: white !important; }
+  #stars-canvas, .nebula, .btn-wrap, .greeting, .message-card { display: none !important; }
+  .ticket { box-shadow: none !important; border: 2px solid #333 !important; border-radius: 12px !important; }
+  .ticket::before { background: #f5c842 !important; }
+  .ticket-body { background: white !important; }
+  .ticket-stub { background: #f5f5f5 !important; }
+  .obs-name { color: #1a0a00 !important; }
+  .value { color: #222 !important; }
+  .value.highlight { color: #b8860b !important; }
+  .stub-name { color: #b8860b !important; }
+  .stub-event, .stub-code { color: #555 !important; }
+  label { color: #0077aa !important; }
+  .divider { color: #999 !important; }
+  .info-field .value[style*="accent-pink"] { color: #cc0044 !important; }
+</style>
+
+</body>
+</html>
